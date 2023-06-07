@@ -121,3 +121,8 @@ module.exports = {
     - remoteEntry.js -> containts the list of files available to load form the current project
     - src_index.js -> is the version that is safe to browser.
     - faker.ks -> the safe version of faker.
+
+### In Container
+- Index give the instruccion to import first "some more code" from bootstrap.js.  Thats the main reason.
+- Index what it mainly does is fetch data.
+- main.js still can be open invidually.
