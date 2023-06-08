@@ -22,7 +22,11 @@ module.exports = {
              */
             exposes: {
                 './CartShow': './src/index'
-            }
+            },
+            /**
+            * ALlow to share depencies if already have them.
+            */
+            shared: ['faker']
         }),
         new HtmlWebpackPlugin({
             template: './public/index.html'
@@ -31,5 +35,4 @@ module.exports = {
 };
 
 
- 
- 
+

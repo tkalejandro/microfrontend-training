@@ -126,3 +126,20 @@ module.exports = {
 - Index give the instruccion to import first "some more code" from bootstrap.js.  Thats the main reason.
 - Index what it mainly does is fetch data.
 - main.js still can be open invidually.
+
+## Section 3 - Sharing dependencies between apps
+
+In other words. avoiding duplicating dependencies. In this example faker is 2 times. 
+Module Federation Plugin will helps in this, since this is the one in charge of adding code.
+
+### Uncaught Error: Shared module is not available for eager consumption
+
+````
+Uncaught Error: Shared module is not available for eager consumption: webpack/sharing/consume/default/faker/faker
+````
+What happens is, even in container is working, as an indiviual is having problems because now faker is async and when it load for first time, the code is no there yet.  To fix this: You need to create the `bootstrap` file with the main code, and an `index` files calling the `bootstrap` file, to have enough time to fix it.  Remember to use import as a function. `import('./bootstrap`)
+
+### What happens when we have different versions?
+
+- Module Federation Plugin is smart enoguh to detect different versions of dependencies. This behavior is totally expected. 
+- When major version is the same (same first number) it will share the same dependencie. But you need to make sure the versions are written with this first character `^5.1.0`, 

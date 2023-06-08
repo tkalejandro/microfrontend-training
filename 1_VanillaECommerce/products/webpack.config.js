@@ -22,7 +22,11 @@ module.exports = {
              */
             exposes: {
                 './ProductsIndex': './src/index'
-            }
+            },
+            /**
+             * ALlow to share depencies if already have them.
+             */
+            shared: ['faker']
         }),
         new HtmlWebpackPlugin({
             template: './public/index.html'
