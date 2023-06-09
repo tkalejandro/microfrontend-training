@@ -17,4 +17,6 @@ const devConfig = {
     ]
 }
 
+//Function to merge all common configs with the dev configs.
+// Dev configs is second, to make sure it overwrite the common ones.
 module.exports = merge(commonConfig, devConfig)

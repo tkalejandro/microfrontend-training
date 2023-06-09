@@ -171,7 +171,7 @@ Tips:
 
 In a nutshell, how the current state of the code was, Produts and Cart were assumming the ID where to print the information was "known".  However this is dangerous because normally each team will have their own configuration. Therefore the microfrontends will need to create a mount function that can be exported to the container and then load the code. 
 
-````
+```
 const mount = (element) => {
     const cartText = `<div> You have a ${faker.random.number()} items in your cart`
 
@@ -188,13 +188,13 @@ if(process.env.NODE_ENV === 'development') {
 }
 
 export { mount }
-````
+```
 
 Tip: Make sure you update expose file to share inside the `webpack.config.js`, since isnt anymore the `index.html` but the `bootstrap.js`
 
 Inside container, what we do now, is to call those mount functions.
 
-````
+```
 import { mount as productsMount } from '../../products/src/bootstrap'
 import {mount as cartMount } from '../../cart/src/bootstrap' 
 import 'products/ProductsIndex'
@@ -202,7 +202,7 @@ import 'cart/CartShow'
 
 productsMount(document.querySelector('#my-products'))
 cartMount(document.querySelector('#my-cart'))
-`````
+```
 
 
 ### Naming bug
@@ -221,3 +221,51 @@ Overall some great tips:
 - CSS should not affect other projects. Keep it isolated , scoped.
 - Version control. It could be monorepo or separate repo.  At the it doesnt matter unless we keep the good practices.
 - Container should have the power to use later version of an app or a specific version of the project.
+
+## Create React App problem (My be an old problem)
+
+In a nutshell there are some problems with webpack Module plugin and create-react-app command. To fix this, we will need to create a react app from scratch. 
+
+- Classic react:
+```
+import React from "react";
+import ReactDOM from "react-dom";
+
+// Here is always main code. 
+
+//Mount fucntion to start up the app
+const mount = (el) => {
+    ReactDOM.render(
+        <h1>Hi there</h1>,
+        el
+    )
+}
+
+//If we are in the development and in isolation. Call mount
+if(process.env.NODE_ENV === 'development') {
+    const devRoot = document.querySelector('#_marketing-dev-root')
+
+    if(devRoot) {
+        mount(devRoot)
+    }
+}
+
+// We are running throught container and we should export the mount function
+export { mount }
+```
+
+##  Config folder
+
+We will need to use 3 types of config. One when is common and the other 2 when the enviroment is  `development` and the other one when is `production`
+
+````
+config
+- webpack.common.js
+- webpack.dev.js
+- webpack.prod.js
+
+Please check the code of these files for more info.
+````
+
+
+# Section 5 - 
