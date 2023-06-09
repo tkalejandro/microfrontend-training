@@ -208,3 +208,16 @@ cartMount(document.querySelector('#my-cart'))
 ### Naming bug
 
 Make sure the remote names never have the same ID of an element. This will provoke some errors. Because the ID will make a global variable, and  the remote code from webpack is already global variable. And oc, this makes problem.
+
+# Section 4 - Linking Multiple Apps Together
+
+In this section the main purpose of learning is how to link all microfrontends using frameworks. For this case we will have a fake company with Marketing , Authentication and Dashboard Team. DONT FORGET, the 4, the container
+
+## Arquitecture decissions
+
+Overall some great tips:
+- Dont share states, components between projects. Keep them totally isolated, maybe in the future we change the framework. 
+- To communicate maybe between projects, we need to use the container, but this container should never asumme what kind of framework the other project is using. For that, we will use callbacks and events. The logic should be very generic. 
+- CSS should not affect other projects. Keep it isolated , scoped.
+- Version control. It could be monorepo or separate repo.  At the it doesnt matter unless we keep the good practices.
+- Container should have the power to use later version of an app or a specific version of the project.
