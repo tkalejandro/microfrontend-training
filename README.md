@@ -268,4 +268,32 @@ Please check the code of these files for more info.
 ````
 
 
-# Section 5 - 
+# Section 5 - Generic Ties Between Projects
+
+## General knowlegde
+- What is important here, is just we start the react project in  the `App.js` and call it in the `bootstrap.js` file.
+- Inside container we dont care about checking if development or not, since container it will render all microfrontends anyway.
+
+## Regarding share dependencies
+Also if we would like that ModuleFederationPlugin do all the work for us of share dependencies and we dont do it manually, then we have to do the following inside `webpack` configurations:
+
+```
+...
+const packageJson = require('../package.json')
+
+const devConfig = {
+    ...
+    plugins: [
+        new ModuleFederationPlugin({
+            ...
+            shared: packageJson.dependencies
+        }),
+        ...
+    ]
+}
+
+```
+
+
+
+Please take in count, is always better to have control of it , than giving all the power to the plugin.
