@@ -127,7 +127,7 @@ module.exports = {
 - Index what it mainly does is fetch data.
 - main.js still can be open invidually.
 
-## Section 3 - Sharing dependencies between apps
+# Section 3 - Sharing dependencies between apps
 
 In other words. avoiding duplicating dependencies. In this example faker is 2 times. 
 Module Federation Plugin will helps in this, since this is the one in charge of adding code.
@@ -143,3 +143,68 @@ What happens is, even in container is working, as an indiviual is having problem
 
 - Module Federation Plugin is smart enoguh to detect different versions of dependencies. This behavior is totally expected. 
 - When major version is the same (same first number) it will share the same dependencie. But you need to make sure the versions are written with this first character `^5.1.0`, 
+
+### Singleton loading
+
+Sometimes , there are some libraries that only requires to have 1 single copy and not multiple of it. One case for that is React.
+To make sure it only staty one time we need to do in `webpack.config.js` :
+
+```
+...
+plugins: [
+    new ModulefederationPlugin({
+        ...
+        shared: {
+            faker: {
+                singleton: true
+            }
+        }
+    })
+]
+```
+
+Tips:
+- `unsatisfied version xxx of shared single module xxx` : This mean we are trying to use 2 different version of a library but we are forcing to only have one copy.  So to fix this, we need to check really how we really want to have our rule. 
+- If we want one copy, we need to have same  main version (first number). 
+
+### Running the microfrontends independely and flexible
+
+In a nutshell, how the current state of the code was, Produts and Cart were assumming the ID where to print the information was "known".  However this is dangerous because normally each team will have their own configuration. Therefore the microfrontends will need to create a mount function that can be exported to the container and then load the code. 
+
+````
+const mount = (element) => {
+    const cartText = `<div> You have a ${faker.random.number()} items in your cart`
+
+    element.innerHTML = cartText
+}
+
+
+if(process.env.NODE_ENV === 'development') {
+    const el = document.querySelector('#cart-dev')
+
+    if (el) {
+        mount(el)
+    }
+}
+
+export { mount }
+````
+
+Tip: Make sure you update expose file to share inside the `webpack.config.js`, since isnt anymore the `index.html` but the `bootstrap.js`
+
+Inside container, what we do now, is to call those mount functions.
+
+````
+import { mount as productsMount } from '../../products/src/bootstrap'
+import {mount as cartMount } from '../../cart/src/bootstrap' 
+import 'products/ProductsIndex'
+import 'cart/CartShow'
+
+productsMount(document.querySelector('#my-products'))
+cartMount(document.querySelector('#my-cart'))
+`````
+
+
+### Naming bug
+
+Make sure the remote names never have the same ID of an element. This will provoke some errors. Because the ID will make a global variable, and  the remote code from webpack is already global variable. And oc, this makes problem.

@@ -21,12 +21,17 @@ module.exports = {
              * Files available to access
              */
             exposes: {
-                './CartShow': './src/index'
+                './CartShow': './src/bootstrap'
             },
             /**
             * ALlow to share depencies if already have them.
             */
-            shared: ['faker']
+           shared: ['faker']
+            // shared: {
+            //     faker: {
+            //         singleton: true
+            //     }
+            // }
         }),
         new HtmlWebpackPlugin({
             template: './public/index.html'
