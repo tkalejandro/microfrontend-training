@@ -297,3 +297,10 @@ const devConfig = {
 
 
 Please take in count, is always better to have control of it , than giving all the power to the plugin.
+
+# Section 6 - Implementing a CI / CD Pipeline
+
+Frontend deployment currently is very easy. We have some apps such as Heroku or Vervel where this is possible. However they all assume you are trying to publish just 1 project and not multiple projects. Thats why we have to host our site in AWS.
+
+- The idea at the end, is that AWS will know what part of our code has change andd it will deploy just the piece of code that need to be deployed.
+- We will need to use Amazon CloudFront and Amazon 3
