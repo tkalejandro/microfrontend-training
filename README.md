@@ -303,4 +303,149 @@ Please take in count, is always better to have control of it , than giving all t
 Frontend deployment currently is very easy. We have some apps such as Heroku or Vervel where this is possible. However they all assume you are trying to publish just 1 project and not multiple projects. Thats why we have to host our site in AWS.
 
 - The idea at the end, is that AWS will know what part of our code has change andd it will deploy just the piece of code that need to be deployed.
-- We will need to use Amazon CloudFront and Amazon 3
+- We will need to use Amazon CloudFront and Amazon S3
+
+## Webpack Production Configurations
+
+Example of container:
+
+```
+const { merge } = require('webpack-merge')
+const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin')
+const commonConfig = require('./webpack.common')
+const packageJson = require('../package.json')
+
+const domain = process.env.PRODUCTION_DOMAIN
+const prodConfig = {
+    //It will minifize the file
+    mode: 'production',
+    output: {
+        // This is how it will detect what type of file to use.
+        filename: '[name].[contenthash].js'
+    },
+    plugins: [
+        new ModuleFederationPlugin({
+            name: 'container',
+            remotes: {
+                marketing: `marketing@${domain}/marketing/remoteEntry.js`
+            },
+            shared: packageJson.dependencies
+        })
+    ]
+}
+
+module.exports = merge(commonConfig, prodConfig)
+```
+
+Example of Marketing:
+
+```
+const { merge } = require('webpack-merge')
+const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin')
+const commonConfig = require('./webpack.common')
+const packageJson = require('../package.json')
+
+const productionConfig = {
+    mode: 'production',
+    output: {
+        filename: '[name].[contenthash].js'
+    },
+    plugins: [
+        new ModuleFederationPlugin({
+            name: "marketing",
+            filename: 'remoteEntry.js',
+            exposes: {
+                './MarketingApp': './src/bootstrap'
+            },
+            shared: packageJson.dependencies
+        }),
+    ]
+}
+
+//Function to merge all common configs with the dev configs.
+// Dev configs is second, to make sure it overwrite the common ones.
+module.exports = merge(commonConfig, productionConfig)
+```
+
+### Regarding HTMLWebpackPlugin in Container
+
+In this case we move this plugin to common because it will be the same for development as production.
+
+Updated common config:
+
+```
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+
+module.exports = {
+    ...
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: './public/index.html'
+        })
+    ]
+}
+```
+
+## Set up the CI / CD Piepline (Github)
+
+For this we need to use Github Actions. The flow of todos are the following:
+
+### Deploying container
+
+- Whenever code is pushed to main branch and this commit containts a change to the `container` folder.
+- Change into the `container` folder
+- Install dependencies
+- Createa a production build using webpack
+- Upload the result to AWS S3
+
+Note: ` - uses: shinyinc/action-aws-cli@v1.2` 
+
+
+To be able to do this scripts we can use the platform on Github "Actions". They have editor and also examples.
+Also its possible to do in your own.
+
+Starting at root a folder `.github/workflows`
+
+Here we will create YAML file. This si the one that make it possible.
+
+```
+# name of action
+name: deploy-container
+
+on:
+  push:
+    branches:
+      # Only look for this branch changes
+      - main
+    paths:
+    # This means it will look for any change in the container
+    - 'packages/container/**'
+    
+
+defaults:
+  run: 
+    # Location where is should run
+    working-directory: packages/container
+
+# we can have multiple  jobs
+jobs: 
+  build:
+    # Virtual Machine where it would load
+    runs-on: ubuntu-latest
+
+    steps:
+      # USe Actions and Install dependencies and build.
+      - uses: actions/checkout@v2
+      - run: npm install
+      - run: npm run build 
+
+      # Access to AWS CLI and run AWS S3
+      - uses: shinyinc/action-aws-cli@v1.2
+      - run: aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET_NAME}}/container/latest
+        env:
+          AWS_ACCESS_KEY_ID: ${{ AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      
+
+```

@@ -1,0 +1,38 @@
+# name of action
+name: deploy-container
+
+on:
+  push:
+    branches:
+      # Only look for this branch changes
+      - main
+    paths:
+    # This means it will look for any change in the container
+    - 'packages/container/**'
+    
+
+defaults:
+  run: 
+    # Location where is should run
+    working-directory: packages/container
+
+# we can have multiple  jobs
+jobs: 
+  build:
+    # Virtual Machine where it would load
+    runs-on: ubuntu-latest
+
+    steps:
+      # USe Actions and Install dependencies and build.
+      - uses: actions/checkout@v2
+      - run: npm install
+      - run: npm run build 
+
+      # Access to AWS CLI and run AWS S3
+      - uses: shinyinc/action-aws-cli@v1.2
+      - run: aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET_NAME}}/container/latest
+        env:
+          AWS_ACCESS_KEY_ID: ${{ AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      
