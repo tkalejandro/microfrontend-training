@@ -570,3 +570,85 @@ So now we have to fix that in CloudFront
 2. Visit invalidations
 3. Create a new invalidation for the index.html which is the one not updating. The other filers are updating because the hash is always different. Add this now : `container/latest/index.html`
 
+We could the Invalidation automatic directly in the `container.yml` file. We need to add one more run.
+
+```
+# name of action
+name: deploy-container
+
+on:
+  ...
+jobs: 
+  build:
+    ...
+    steps:
+      ...
+        # This is to create an automatic invalidation via CLI instead of doing it manually. 
+      - run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_DISTRIBUTION_ID }} --path "/container/latest/index.html"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: eu-central-1
+      
+```
+
+## Deploying Marketing
+
+For this we need to create a new configuration, this time we will create the marketing.yml . Lucky for us the configuration is not so different.
+This is the final exmaple: 
+
+```
+# name of action
+name: deploy-marketing
+
+on:
+  # This action means after git push
+  push:
+    branches:
+      # Only look for this branch changes
+      - main
+    paths:
+    # This means it will look for any change in the container
+    - 'packages/marketing/**'
+    
+
+defaults:
+  run: 
+    # Location where is should run
+    working-directory: packages/marketing
+
+# we can have multiple  jobs
+jobs: 
+  build:
+    # Virtual Machine where it would load
+    runs-on: ubuntu-latest
+
+    steps:
+      # USe Actions and Install dependencies and build.
+      - uses: actions/checkout@v2
+      - run: npm install
+      - run: npm run build 
+
+      # Access to AWS CLI and run AWS S3
+      - uses: shinyinc/action-aws-cli@v1.2
+      - run: aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET_NAME}}/marketing/latest
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: eu-central-1
+        # This is to create an automatic invalidation via CLI instead of doing it manually. 
+      - run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_DISTRIBUTION_ID }} --path "/marketing/latest/remoteEntry.js"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: eu-central-1
+      
+
+```
+
+## PRO TIPS - Workflow insights
+
+- Create local branches
+- Push changes from your local branch
+- Ask for Pull request
+- With current configurations everything will be updated automatic.

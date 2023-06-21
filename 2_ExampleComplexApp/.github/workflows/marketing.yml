@@ -1,5 +1,5 @@
 # name of action
-name: deploy-container
+name: deploy-marketing
 
 on:
   # This action means after git push
@@ -9,13 +9,13 @@ on:
       - main
     paths:
     # This means it will look for any change in the container
-    - 'packages/container/**'
+    - 'packages/marketing/**'
     
 
 defaults:
   run: 
     # Location where is should run
-    working-directory: packages/container
+    working-directory: packages/marketing
 
 # we can have multiple  jobs
 jobs: 
@@ -28,19 +28,16 @@ jobs:
       - uses: actions/checkout@v2
       - run: npm install
       - run: npm run build 
-        env:
-          # This ENV is here because is only available for this run.
-          PRODUCTION_DOMAIN: ${{ secrets.PRODUCTION_DOMAIN }}
 
       # Access to AWS CLI and run AWS S3
       - uses: shinyinc/action-aws-cli@v1.2
-      - run: aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET_NAME}}/container/latest
+      - run: aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET_NAME}}/marketing/latest
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: eu-central-1
         # This is to create an automatic invalidation via CLI instead of doing it manually. 
-      - run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_DISTRIBUTION_ID }} --path "/container/latest/index.html"
+      - run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_DISTRIBUTION_ID }} --path "/marketing/latest/remoteEntry.js"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

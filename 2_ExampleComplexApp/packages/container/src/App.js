@@ -9,7 +9,7 @@ const App = () => {
     return (
         <>
             <div>My App Container</div>
-            <hr />
+            <hr />  
             <MarketingApp />
         </>
     )
