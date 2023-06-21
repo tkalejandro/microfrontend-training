@@ -413,6 +413,7 @@ Here we will create YAML file. This si the one that make it possible.
 name: deploy-container
 
 on:
+  # This action mean after git push
   push:
     branches:
       # Only look for this branch changes
@@ -445,7 +446,127 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: eu-central-1
 
       
 
 ```
+# Section 7 - Deployment to Amazon Web Services
+
+## S3 Bucket Creation and Configuration
+
+1. First you need an account AMS. For this you can try to login here `console.aws.amazon.com`. You will need a credit card.
+2. Once the account is ready, go to search and look for Bucket.
+3. Click on Create Bucket
+4. write a Bucket name (It should be unique)
+5. Select a region and make sure you remember the identifier. For example: EU Frankfurt, the identifiert is `eu-central-1`.
+
+As you noted. Buckets are suppose to be safe and no one should have access to it.  But in our case we need it public. So we need to change those configurations
+
+1. First we need to click in our bucket
+2. Go to `Properties` and look `Static website hosting`
+3. Enable it and write index.html
+4. Save changes.
+5. Visit now Block Public Access options and make sure to uncheck everything. Amazon will wry to warn you of your changes.
+
+The next steps work with is regarding the Policy. This are the policy of how all amazon web services can communicate to each one. 
+
+1. Find the policy options and click to add one. A new site will be open.
+2. Select type of policy Amazon S3.
+3. Select the actionv `get object`
+4. Add your ARN (this you can find inside the Policy options)
+5. Then make sure you copy paste the `ARN + "/*"`
+6. Option Principal you need to `*`
+7. Click Add Statement.
+8. Generate Policy and then paste in the Policy options and save.
+
+## CloudFront setup
+
+1. Go to AWS Management Console and use the search bar to find CloudFront
+2. Click Create distribution
+3. Set Origin domain to your S3 bucket
+4. Find the Default cache behavior section and change Viewer protocol policy to Redirect HTTP to HTTPS
+5. Scroll down and click Create Distribution
+6. After Distribution creation has finalized click the Distribution from the list, find its Settings and click Edit
+7. Scroll down to find the Default root object field and enter /container/latest/index.html
+8. Click Save changes
+9. Click Error pages
+10. Click Create custom error response
+11. Change HTTP error code to 403: Forbidden
+12. Change Customize error response to Yes
+14. Set Response page path to /container/latest/index.html
+15. Set HTTP Response Code to 200: OK
+
+## Creating and Assigning Access Keys
+
+1. Search for "IAM"
+
+2. Click "Create Individual IAM Users" and click "Manage Users"
+
+3. Click "Add User"
+
+4. Enter any name you’d like in the "User Name" field.
+
+5. Click "Next"
+
+6. Click "Attach Policies Directly"
+
+7. Use the search bar to find and tick AmazonS3FullAccess and CloudFrontFullAccess
+
+8. Click "Next"
+
+9. Click "Create user"
+
+10. Select the IAM user that was just created from the list of users
+
+11. Click "Security Credentials"
+
+12. Scroll down to find "Access Keys"
+
+13. Click "Create access key"
+
+14. Select "Command Line Interface (CLI)"
+15. Scroll down and tick the "I understand..." check box and click "Next"
+
+16. Copy and/or download the Access Key ID and Secret Access Key to use for deployment.
+
+### Back to Github 
+
+Now you will need to copy paste the Access and secret key in Github.
+
+1. Settings
+2. Secrets and variables
+3. Add all env that `container.yml` needs
+
+### Small error fix (white screen)
+
+If is white screen, that means app deploy but somehow the main.js file is not been call.
+Therefore we need to do some fix in our webpack production on container.
+
+- First we need to at the public path in container webpack for production `/container/latest`.
+
+```
+...
+const prodConfig = {
+    //It will minifize the file
+    mode: 'production',
+    output: {
+        ...
+        // This is to refer a public path.  Without this it refers directly.
+        publicPath: '/container/latest/'
+    },
+    ...
+}
+
+module.exports = merge(commonConfig, prodConfig)
+```
+
+# Section 8 - Microfrontend-Specific AWS Config
+
+Now the script is possible.  However S3 Bucket has the problem it can only upload new files, if you upload the same file it wont update.
+So now we have to fix that in CloudFront
+
+1. Visit Distributions
+2. Visit invalidations
+3. Create a new invalidation for the index.html which is the one not updating. The other filers are updating because the hash is always different. Add this now : `container/latest/index.html`
+

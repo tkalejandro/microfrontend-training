@@ -9,7 +9,9 @@ const prodConfig = {
     mode: 'production',
     output: {
         // This is how it will detect what type of file to use.
-        filename: '[name].[contenthash].js'
+        filename: '[name].[contenthash].js',
+        // This is to refer a public path.  Without this it refers directly.
+        publicPath: '/container/latest/'
     },
     plugins: [
         new ModuleFederationPlugin({
