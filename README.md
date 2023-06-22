@@ -652,3 +652,53 @@ jobs:
 - Push changes from your local branch
 - Ask for Pull request
 - With current configurations everything will be updated automatic.
+
+# Section 9 - Handling CSS in Microfrontends
+
+Witht the current configurations all CSS files are stacking for each microfrontend. This can lead to undesirables styles.
+So how to solve it?
+
+We need to scope our CSS for each microfrontend.
+
+1. Custom CSS Solutions
+
+- We could use CSS-In-JS. it will generate random CSS class names on production.
+- Vue and Angular is already automatic.
+- Use Namespace the css. `.container h1`, `.marketing h1`. This is very easy but leads to possible human error.
+
+2. CSS from Framework
+
+- Use a library that has internally a CSS-in-js.  For example Material UI. 
+- Manually build the css library.
+
+We could possible mention to use the same library for all projects, but this lead to unflexibility. This is to avoid.
+
+Regarding the bug. Even tho each project is using MAterial UI (CSS-In-Js) , the same header is receiving 2 unique css styles giving the same properties, this only happen in production because the building time, the code is trying to optimize the css files.
+
+## How to fix?
+
+We need to use generateClassName.
+
+This is solution fot MAterial UI 4.
+
+```
+...
+import { ..., createGenerateClassName } from '@material-ui/core/styles'
+
+...
+
+const generateClassName = createGenerateClassName({
+    productionPrefix: 'ma' // This will be indentifier. 
+})
+
+const App = () => {
+    return(
+        <StylesProvider generateClassName={generateClassName} >
+           ...
+        </StylesProvider>
+    )
+}
+
+export default App
+```
+
