@@ -702,3 +702,143 @@ const App = () => {
 export default App
 ```
 
+# Section 10 - Implementing Multi-Tier Navigation
+
+For this section this will be our unflexible requirements
+
+1. Container + Indivual SubAApps, both they have their own navigation.
+2. SubApps need to provide many page routes. We want to avoid redeploying the container to add the pages.
+3. We need to show 2 Microfront ends at the same time.
+4. Use library for navigation. Avoid doing custom
+5. Should work in production and also in isolation.
+6. The communication between app should be always in Generic.
+
+
+## History 
+
+For navigation is very important that: 
+
+- Use browser History for container
+- Memory History for the microfrontends
+- In Development and for isolation is the only reason we will use browserHistory 
+
+To make it possible the communication between Container and Marketing, we need to update all core files to this:
+
+### In Container
+src/components/MarketingApp.js
+
+```
+import { mount } from 'marketing/MarketingApp';
+import React, {useRef, useEffect} from 'react'
+import { useHistory } from 'react-router-dom';
+
+const MarketingApp = () => {
+    const ref = useRef(null)
+    const history = useHistory()
+    
+    useEffect(() => {
+        const { onParentNavigate } = mount(ref.current, {
+            // This is a function that I ad dhere expecting some information this case history from the application marketing
+            
+            // this is custom. pathname is destructured and change name by using nextPathname.
+            onNavigate: ({ pathname: nextPathname}) => {
+                //After Marketing now are back here waiting for action!
+                const {pathname} = history.location
+                if(pathname === nextPathname) return
+                history.push(nextPathname)
+            }
+        })
+
+        history.listen(onParentNavigate)
+    }, [])
+    return (
+        <div ref={ref}></div>
+    )
+}
+
+export default MarketingApp
+```
+
+### In Marketing
+
+src/App.js
+```
+import React from "react";
+import { Switch, Route, Router } from 'react-router-dom'
+import { StylesProvider, createGenerateClassName } from '@material-ui/core/styles'
+
+import Landing from './components/Landing'
+import Pricing from './components/Pricing'
+
+const generateClassName = createGenerateClassName({
+    productionPrefix: 'ma'
+})
+
+const App = ({ history }) => {
+    console.log(history)
+    return (
+        <StylesProvider generateClassName={generateClassName} >
+            {/* This means history path */}
+            <Router history={history}>
+                <Switch>
+                    <Route exact path="/pricing" component={Pricing} />
+                    <Route exact path="/" component={Landing} />
+                </Switch>
+            </Router>
+        </StylesProvider>
+    )
+}
+
+export default App
+```
+
+src/bootstrap.js
+```
+import React from "react";
+import ReactDOM from "react-dom";
+import App from "./App";
+import { createMemoryHistory , createBrowserHistory} from 'history'
+
+// Here is always main code. 
+
+//Mount fucntion to start up the app
+
+// On Navigate is the function that is already in container waiting to be trigger
+const mount = (el, { onNavigate, defaultHistory }) => {
+    // History created
+  
+    const history = defaultHistory || createMemoryHistory()
+
+    //Whenever the path change, this will be call.
+    // It changes first in Marketing and then we need it to change in Container.
+    // Here are are providing some information related to navigation.
+    // Now go back to the container.
+    if (onNavigate) {
+        history.listen(onNavigate)
+    }
+
+    ReactDOM.render( <App history={history}/>,el)
+
+    return {
+        onParentNavigate({pathname: nextPathname}) {
+             //After Clicking on container but viewing Marketing, this will go back to container and show me something
+             const {pathname} = history.location
+             if(pathname === nextPathname) return
+             history.push(nextPathname)
+        }
+    }
+}
+
+//If we are in the development and in isolation. Call mount
+if(process.env.NODE_ENV === 'development') {
+    const devRoot = document.querySelector('#_marketing-dev-root')
+    // This is to make it possible to see the path correctly when doing in isolation.
+    if(devRoot) {
+        mount(devRoot, { defaultHistory : createBrowserHistory()})
+    }
+}
+
+// We are running throught container and we should export the mount function
+export { mount }
+```
+
