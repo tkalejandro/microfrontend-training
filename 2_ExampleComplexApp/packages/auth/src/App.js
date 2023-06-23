@@ -4,19 +4,24 @@ import { StylesProvider, createGenerateClassName } from '@material-ui/core/style
 import Signup from "./components/Signup";
 import Signin from './components/Signin'
 
+
 const generateClassName = createGenerateClassName({
     productionPrefix: 'au'
 })
 
-const App = ({ history }) => {
-    console.log(history)
+const App = ({ history, onSignIn }) => {
+    
     return (
         <StylesProvider generateClassName={generateClassName} >
             {/* This means history path */}
             <Router history={history}>
                 <Switch>
-                    <Route path="/auth/signin" component={Signin} />
-                    <Route path="/auth/signup" component={Signup} />
+                    <Route path="/auth/signin">
+                        <Signin onSignIn={onSignIn} />
+                    </Route>
+                    <Route path="/auth/signup">
+                        <Signup onSignIn={onSignIn} />
+                    </Route>
                 </Switch>
             </Router>
         </StylesProvider>

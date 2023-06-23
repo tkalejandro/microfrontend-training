@@ -1,0 +1,45 @@
+# name of action
+name: deploy-auth
+
+on:
+  # This action means after git push
+  push:
+    branches:
+      # Only look for this branch changes
+      - main
+    paths:
+    # This means it will look for any change in the container
+    - 'packages/auth/**'
+    
+
+defaults:
+  run: 
+    # Location where is should run
+    working-directory: packages/auth
+
+# we can have multiple  jobs
+jobs: 
+  build:
+    # Virtual Machine where it would load
+    runs-on: ubuntu-latest
+
+    steps:
+      # USe Actions and Install dependencies and build.
+      - uses: actions/checkout@v2
+      - run: npm install
+      - run: npm run build 
+
+      # Access to AWS CLI and run AWS S3
+      - uses: shinyinc/action-aws-cli@v1.2
+      - run: aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET_NAME}}/auth/latest
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: eu-central-1
+        # This is to create an automatic invalidation via CLI instead of doing it manually. Invalitadion means , that it will update again.
+      - run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_DISTRIBUTION_ID }} --path "/auth/latest/remoteEntry.js"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: eu-central-1
+      

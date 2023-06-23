@@ -967,6 +967,19 @@ const App = () => {
 
 export default App
 
+# Section 12 - Authentication in Microfrontends
+
+To take in count:
+
+- AuthApp is for signin / up users
+- AuthApp is not for enforcing permissions
+- Therefore we need centralize the Auth in container. 
+- Is possible each app knows about auth, but not so good.
+
+
+The strategy is to create a callback in Container for everytime there is an authentication change. same as we did before with onPathChange
+
+
 
 
 
