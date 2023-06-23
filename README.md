@@ -979,7 +979,175 @@ To take in count:
 
 The strategy is to create a callback in Container for everytime there is an authentication change. same as we did before with onPathChange
 
+# Section 13 - Using Other Frontend Frameworks  (VUE.js)
 
 
+This is just configuration for VUE plues extra notes.
 
 
+1. webpack.common in Dashboard
+
+```
+const { VueLoaderPlugin } = require('vue-loader')
+
+module.exports = {
+    entry: './src/index.js',
+    output: {
+        filename: '[name].[contenthash].js'
+    },
+    resolve: {
+        extensions: ['.js', '.vue']
+    },
+    module: {
+        rules: [
+            // This rules is because we will be using all this type of files in our project
+            // For the other ones we could also use this rules, but since there was not images gif and more, there was no need.
+            // This is for webpack to understand.
+            {
+                test: /\.(png|jpe?g|gif|woff|svg|eot|ttf)$/i,
+                use: [
+                    {loader: 'file-loader'}
+                ]
+            }, 
+            {
+                test: /\.vue$/,
+                use: 'vue-loader'
+            },
+            {
+                test: /\.scss|\.css$/,
+                use: ['vue-style-loader', 'style-loader', 'css-loader', 'sass-loader']
+            },
+            
+            //Loader to tell webpack to process something
+            {
+                test: /\.m?js$/,
+                //Avoid node mdoules
+                exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: [
+                           
+                            '@babel/preset-env'
+                        ],
+                        plugins: [
+                            '@babel/plugin-transform-runtime'
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+    plugins: [new VueLoaderPlugin ]
+}
+```
+
+2. webpack dev
+```
+const { merge } = require('webpack-merge')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin')
+const commonConfig = require('./webpack.common')
+const packageJson = require('../package.json')
+
+const devConfig = {
+    mode: 'development',
+    output: {
+        // Same as the port. And this is to fix the problem when routes are nested.
+        publicPath: 'http://localhost:8083/'
+    },
+    devServer: {
+        port: 8083,
+        historyApiFallback: {
+            index: '/index.html',
+        },
+        // We will load fonts and they require to have this configuration because CORS POLICY:
+        headers: {
+            'Access-Control-Allow-Origin': '*'
+        }
+    },
+    plugins: [
+        new ModuleFederationPlugin({
+            name: "dashboard",
+            filename: 'remoteEntry.js',
+            exposes: {
+                './DashboardApp': './src/bootstrap'
+            },
+            // shared: [
+            //     'react', 'react-dom'
+            // ]
+            shared: packageJson.dependencies
+        }),
+        new HtmlWebpackPlugin({
+            template: './public/index.html',
+        })
+    ]
+}
+
+//Function to merge all common configs with the dev configs.
+// Dev configs is second, to make sure it overwrite the common ones.
+module.exports = merge(commonConfig, devConfig)
+```
+
+3. Webpack production
+
+```
+const { merge } = require('webpack-merge')
+const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin')
+const commonConfig = require('./webpack.common')
+const packageJson = require('../package.json')
+
+const productionConfig = {
+    mode: 'production',
+    output: {
+        filename: '[name].[contenthash].js',
+        publicPath: '/dashboard/latest/'
+    },
+    plugins: [
+        new ModuleFederationPlugin({
+            name: "dashboard",
+            filename: 'remoteEntry.js',
+            exposes: {
+                './DashboardApp': './src/bootstrap'
+            },
+            shared: packageJson.dependencies
+        }),
+    ]
+}
+
+//Function to merge all common configs with the dev configs.
+// Dev configs is second, to make sure it overwrite the common ones.
+module.exports = merge(commonConfig, productionConfig)
+```
+
+
+# REMINDERS
+
+- Get to know your requirements first and then decide the archictecture
+- If I change something, this means I have to change another App?
+- Everyone will eventually forget React, thats why you should keep things general
+- DOnt forget to scope your CSS. Very important!!
+
+# BONUS GUIDES
+Check Udemy for the Coupon CODES
+
+
+- React Testing Library and Jest: The Complete Guide - https://www.udemy.com/course/react-testing-library-and-jest/
+
+- Redis: The Complete Developer's Guide - https://www.udemy.com/course/redis-the-complete-developers-guide-p/
+
+- NestJS: The Complete Developer's Guide - https://www.udemy.com/course/nestjs-the-complete-developers-guide/
+
+- Microservices with Node JS and React - https://www.udemy.com/course/microservices-with-node-js-and-react/
+
+- Docker and Kubernetes: The Complete Guide - https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/
+
+- Go: The Complete Developer's Guide (Golang) - https://www.udemy.com/course/go-the-complete-developers-guide/
+
+- Modern React with Redux [2023 Update] - https://www.udemy.com/course/react-redux/?couponCode=435CDC158F05-BONUS
+
+- Typescript: The Complete Developer's Guide - https://www.udemy.com/course/typescript-the-complete-developers-guide/
+
+- React and TypeScript: Build a Portfolio Project - https://www.udemy.com/course/react-and-typescript-build-a-portfolio-project/
+
+- SQL and PostgreSQL: The Complete Developer's Guide - https://www.udemy.com/course/sql-and-postgresql/
