@@ -842,3 +842,131 @@ if(process.env.NODE_ENV === 'development') {
 export { mount }
 ```
 
+# Section 11 - Perfomance Considerations
+
+After copy pasting the Marketing project to create the new Auth project. We can imply that it might be working.
+However this time the routes for Auth they are nested.
+
+for example marketing was  "/pricing" but auth is "/auth/signin". This wont work!!
+
+This is because we need to add the publicPath to webpack development . We could add this to all our projects.
+
+```
+...
+const devConfig = {
+    mode: 'development',
+    output: {
+        // Same as the port. And this is to fix the problem when routes are nested.
+        publicPath: 'http://localhost:8082/'
+    },
+    ...
+}
+...
+```
+
+Then after we will need to update our navigations.
+
+```
+...
+const App = () => {
+
+    return (
+
+        <BrowserRouter>
+            <StylesProvider generateClassName={generateClassName}>
+                <Header />
+                <Switch>
+                    <Route path="/auth" component={AuthApp} />
+                    <Route path="/" component={MarketingApp} />
+                </Switch>
+            </StylesProvider>
+        </BrowserRouter>
+
+    )
+}
+
+export default App
+```
+
+## Bonus
+
+We might encounter a bug when navigating. And this is because we miss one option in our configurations. We had to add also an initialPath.
+This is to be able to detect in the first mount the current path.
+
+### In Marketing and Auth
+
+```
+...
+const mount = (el, { onNavigate, defaultHistory, initialPathname }) => {
+    // History created
+  
+    const history = defaultHistory || createMemoryHistory({
+        initialEntries: [initialPathname]
+    })
+
+    ...
+}
+
+...
+export { mount }
+```
+
+### In Container AuthApp and MarketingApp
+
+```
+...
+
+const MarketingApp = () => {
+    ...
+    const history = useHistory()
+    
+    useEffect(() => {
+        const { onParentNavigate } = mount(ref.current, {
+            ...
+            
+            // This is to avoid a bug, this will help us to react immeditaly when changing pages.
+            initialPathname: history.location.pathname,
+            ...
+        })
+
+        ...
+    }, [])
+    ...
+}
+
+export default MarketingApp
+```
+
+## Loading Faster
+
+Its always better to use the lazy imports. This is how is done.
+
+import React, {lazy, Suspense} from 'react'
+...
+
+const MarketingLazy = lazy(() => import('./components/MarketingApp'))
+const AuthLazy = lazy(() => import('./components/AuthApp'))
+const App = () => {
+
+    return (
+
+        <BrowserRouter>
+            <StylesProvider generateClassName={generateClassName}>
+                <Header />
+                <Suspense fallback={<div>Loading...</div>}>
+                <Switch>
+                    <Route path="/auth" component={AuthLazy} />
+                    <Route path="/" component={MarketingLazy} />
+                </Switch>
+                </Suspense>
+            </StylesProvider>
+        </BrowserRouter>
+
+    )
+}
+
+export default App
+
+
+
+
